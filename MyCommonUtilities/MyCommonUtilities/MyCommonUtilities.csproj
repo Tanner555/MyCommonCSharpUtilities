@@ -46,6 +46,9 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\FileFinderUtility.cs" />
+    <Compile Include="Utilities\GeneralApplicationHelperUtility.cs" />
+    <Compile Include="Utilities\MsbuildHelperUtility.cs" />
+    <Compile Include="Utilities\SimpleFileParserUtility.cs" />
     <Compile Include="Utilities\TimeUtility.cs" />
   </ItemGroup>
   <ItemGroup>
