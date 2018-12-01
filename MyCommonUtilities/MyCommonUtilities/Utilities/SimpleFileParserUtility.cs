@@ -51,34 +51,7 @@ namespace MyCommonUtilities
                 int _columnContentLookFromIndex = _fulllineFound.IndexOf(_columnContentLookFrom);
                 if(_columnContentLookFromIndex != -1)
                 {
-                    //Check For First Instance of OpenParseRef
-                    //(Such as Quotation Mark) After Archived Directory Arg
-                    int _firstLineCheckIndex = FindFirstIndexOfGivenCharacter(_fulllineFound, _columnContentLookFromIndex, _openParseRef);
-                    List<char> _foundPathInCharacters = new List<char>();
-                    if (_firstLineCheckIndex != -1)
-                    {
-                        for (int i = _firstLineCheckIndex; i < _fulllineFound.Length; i++)
-                        {
-                            //Checks Char After Current One For CloseParseRef(Such as Quotation Mark)
-                            if (_fulllineFound[i + 1] == _closeParseRef)
-                            {
-                                break;
-                            }
-                            else
-                            {
-                                _foundPathInCharacters.Add(_fulllineFound[i + 1]);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("Couldn't Find Instance of OpenParseRef: " + _openParseRef + " Inside found Line: " + _fulllineFound);
-                    }
-
-                    if (_foundPathInCharacters.Count > 0)
-                    {
-                        _foundPath = new string(_foundPathInCharacters.ToArray());
-                    }
+                    string _foundPathInCharacters = ObtainStringFromLine(_openParseRef, _closeParseRef, _fulllineFound, _columnContentLookFromIndex);
                 }
                 else
                 {
@@ -90,6 +63,45 @@ namespace MyCommonUtilities
                 Console.WriteLine("Couldn't Find Instance of LineContentLookFor: " + _lineContentLookFor);
             }
             return _foundPath;
+        }
+
+        public static string ObtainStringFromLine(char openParseRef, char closeParseRef, string lineToObtainCharsFrom, int columnToStartFromIndex)
+        {
+            List<char> obtainedChars = ObtainCharactersFromLine(openParseRef, closeParseRef, lineToObtainCharsFrom, columnToStartFromIndex);
+            if(obtainedChars.Count > 0)
+            {
+                return new string(obtainedChars.ToArray());
+            }
+            return null;
+        }
+
+        public static List<char> ObtainCharactersFromLine(char openParseRef, char closeParseRef, string lineToObtainCharsFrom, int columnToStartFromIndex)
+        {
+            //Check For First Instance of OpenParseRef
+            //(Such as Quotation Mark) After Archived Directory Arg
+            int _firstLineCheckIndex = FindFirstIndexOfGivenCharacter(lineToObtainCharsFrom, columnToStartFromIndex, openParseRef);
+            List<char> _foundPathInCharacters = new List<char>();
+            if (_firstLineCheckIndex != -1)
+            {
+                for (int i = _firstLineCheckIndex; i < lineToObtainCharsFrom.Length; i++)
+                {
+                    //Checks Char After Current One For CloseParseRef(Such as Quotation Mark)
+                    if (lineToObtainCharsFrom[i + 1] == closeParseRef)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        _foundPathInCharacters.Add(lineToObtainCharsFrom[i + 1]);
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("Couldn't Find Instance of OpenParseRef: " + openParseRef + " Inside found Line: " + lineToObtainCharsFrom);
+            }
+
+            return _foundPathInCharacters;
         }
 
         public static string[] ObtainContentFromSharedFile(string _filePath)
