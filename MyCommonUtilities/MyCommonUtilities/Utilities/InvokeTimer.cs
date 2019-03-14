@@ -36,7 +36,7 @@ namespace MyCommonUtilities
             onceInvokeTimer.Start();
         }
 
-        public static void InvokeRepeating(float delay, float interval, Action callback)
+        public static void InvokeRepeating(float interval, Action callback, TaskScheduler _scheduler = null)
         {
             if (ActionTimerDictionary.ContainsKey(callback))
             {
@@ -48,6 +48,18 @@ namespace MyCommonUtilities
             Timer newTimer = new Timer();
             newTimer.Interval = interval;
             newTimer.AutoReset = true;
+            newTimer.Elapsed += (obj, elapsedArgs) =>
+            {
+                if (_scheduler != null)
+                {
+                    Task _task = new Task(callback);
+                    _task.Start(_scheduler);
+                }
+                else
+                {
+                    callback();
+                }
+            };
             ActionTimerDictionary.Add(callback, newTimer);
             newTimer.Start();
         }

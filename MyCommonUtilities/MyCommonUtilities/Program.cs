@@ -12,9 +12,38 @@ namespace MyCommonUtilities
         static void Main(string[] args)
         {
             Console.WriteLine("Hello From Common Utilities");
-            //TestObtainGamePackagePathFromGameProject();
             Console.ReadLine();
         }
+
+        #region TestingInvokeTimer
+        static void TestingInvokeTimer()
+        {
+            Console.WriteLine("Hello From Invoke Timer...");
+
+            bool _continueRunning = true;
+            InvokeTimer.InvokeRepeating(1000f, TestTimerCallback);
+            do
+            {
+                Console.WriteLine("Running Program...");
+                var _key = Console.ReadKey();
+                if (_key.Key == ConsoleKey.Escape)
+                {
+                    _continueRunning = false;
+                }
+                else if (_key.Key == ConsoleKey.S)
+                {
+                    InvokeTimer.CancelInvoke();
+                }
+            } while (_continueRunning);
+
+            Console.WriteLine("See you later...");
+        }
+
+        static void TestTimerCallback()
+        {
+            Console.WriteLine("Testing Callback");
+        }
+        #endregion
 
         #region TestingObtainingGamePackagePath
         static void TestObtainGamePackagePathFromGameProject()
