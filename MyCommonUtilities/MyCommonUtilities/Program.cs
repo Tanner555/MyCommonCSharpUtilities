@@ -15,6 +15,13 @@ namespace MyCommonUtilities
             Console.ReadLine();
         }
 
+        #region TestingJSONSerialization
+        static void TestingJSONSerialization()
+        {
+            JSONSerializerUtility.TestJSONSerialization();
+        }
+        #endregion
+
         #region TestingInvokeTimer
         static void TestingInvokeTimer()
         {
