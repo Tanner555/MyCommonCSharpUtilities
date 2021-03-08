@@ -10,11 +10,22 @@ namespace MyCommonUtilities
 {
     class FileFinderUtility
     {
+        #region Events
         public delegate void GenEventHandler(int _stat);
         public event GenEventHandler OnFilesReadUpdate;
         public event GenEventHandler OnFilesFoundUpdate;
         public event GenEventHandler OnDirectoriesFoundUpdate;
 
+        public delegate void OneStringHandler(string _msg);
+        public event OneStringHandler OnShowErrorMessage;
+
+        private void CallOnShowErrorMessage(string _msg)
+        {
+            if (OnShowErrorMessage != null) OnShowErrorMessage(_msg);
+        }
+        #endregion
+
+        #region Properties
         public int filesRead
         {
             get { return _filesRead; }
@@ -42,13 +53,17 @@ namespace MyCommonUtilities
                 if (OnDirectoriesFoundUpdate != null) OnDirectoriesFoundUpdate(_directoriesFound);
             }
         }
+        #endregion
 
+        #region Fields
         int _filesRead = 0;
         int _filesFound = 0;
         int _directoriesFound = 0;
 
         string[] _fileList = new string[0];
+        #endregion
 
+        #region Initialization
         public FileFinderUtility()
         {
             InitializeFinder();
@@ -61,6 +76,7 @@ namespace MyCommonUtilities
             directoriesFound = 0;
             _fileList = new string[0];
         }
+        #endregion
 
         //Can be called by any class
         public async Task<string[]> ReadFromDirectory(string _dir, Func<string, bool> _filePathCondition = null)
@@ -122,7 +138,7 @@ namespace MyCommonUtilities
             }
             catch (System.Exception excpt)
             {
-                FileFinderLog(excpt.Message, true);
+                CallOnShowErrorMessage(excpt.Message);
             }
 
             return files.ToArray();
@@ -151,15 +167,10 @@ namespace MyCommonUtilities
             }
             catch (System.Exception excpt)
             {
-                await FileFinderLog(excpt.Message, true);
+                CallOnShowErrorMessage(excpt.Message);
             }
 
             return files.ToArray();
-        }
-
-        protected async virtual Task FileFinderLog(string _msg, bool _exception = false)
-        {
-            //Override To Implement Logging
         }
     }
 }
