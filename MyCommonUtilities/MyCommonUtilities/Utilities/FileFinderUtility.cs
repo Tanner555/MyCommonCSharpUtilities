@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace MyCommonUtilities
 {
-    class FileFinderUtility
+    public class FileFinderUtility
     {
         #region Events
         public delegate void GenEventHandler(int _stat);
