@@ -54,6 +54,7 @@
     <Compile Include="Utilities\InvokeTimer.cs" />
     <Compile Include="Utilities\JSONSerializerUtility.cs" />
     <Compile Include="Utilities\MsbuildHelperUtility.cs" />
+    <Compile Include="Utilities\MyMonthAYearGroupUtility.cs" />
     <Compile Include="Utilities\SimpleDurationTimer.cs" />
     <Compile Include="Utilities\SimpleFileParserUtility.cs" />
     <Compile Include="Utilities\TimeUtility.cs" />
