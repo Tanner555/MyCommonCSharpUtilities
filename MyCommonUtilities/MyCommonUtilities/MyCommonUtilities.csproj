@@ -49,6 +49,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\FileFinderUtility.cs" />
+    <Compile Include="Utilities\FileLoggerUtility.cs" />
     <Compile Include="Utilities\GeneralApplicationHelperUtility.cs" />
     <Compile Include="Utilities\InvokeTimer.cs" />
     <Compile Include="Utilities\JSONSerializerUtility.cs" />
