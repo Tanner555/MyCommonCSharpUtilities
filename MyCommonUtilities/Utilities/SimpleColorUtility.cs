@@ -15,9 +15,9 @@ namespace MyCommonUtilities
             _myRandom = _random != null ? _random : new System.Random();
         }
 
-        //public System.Drawing.Color GetRandomColor()
-        //{
-        //    return System.Drawing.Color.FromArgb(_myRandom.Next(0, 255), _myRandom.Next(0, 255), _myRandom.Next(0, 255));
-        //}
+        public System.Drawing.Color GetRandomColor()
+        {
+            return System.Drawing.Color.FromArgb(_myRandom.Next(0, 255), _myRandom.Next(0, 255), _myRandom.Next(0, 255));
+        }
     }
 }
