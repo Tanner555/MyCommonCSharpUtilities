@@ -11,9 +11,23 @@ namespace MyCommonUtilities
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello From Common Utilities");
+            Console.WriteLine("Hello From Common Utilities");            
             Console.ReadLine();
         }
+
+        #region TestingMonthAYearUtility
+        /// <summary>
+        /// Test the Util with a formatted date
+        /// IE: "5/9/2022"
+        /// </summary>
+        static void CreateNewMonthAYearUtilityTest(string dateFormatted)
+        {
+            var _monthAYearGroup = new MyMonthAYearGroupUtility(dateFormatted);
+            Console.WriteLine($"Month and Year from {dateFormatted} is: {_monthAYearGroup.DateByMonth} / {_monthAYearGroup.DateByYear}");
+            Console.WriteLine($"DayCount From Month/Year {"02/2022"} is {MyMonthAYearGroupUtility.GetDayCountFromMonthAYear(2, 2022)}");
+        }
+
+        #endregion
 
         #region TestingJSONSerialization
         static void TestingJSONSerialization()

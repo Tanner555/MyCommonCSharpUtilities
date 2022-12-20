@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,40 +8,15 @@ using System.Threading.Tasks;
 namespace MyCommonUtilities
 {
     /// <summary>
-    /// A Simple MonthAYear Grouping Class Which Has A Lot
-    /// Of Missing Functionality. Don't Use Without Looking Through Each Method Carefully.
+    /// A Simple MonthAYear Grouping Class.
     /// </summary>
     public class MyMonthAYearGroupUtility
     {
-        #region Enums
-        public enum EDateByMonth
-        {
-            Undecided = -1,
-            January = 0,
-            February = 1,
-            March = 2,
-            April = 3,
-            May = 4,
-            June = 5,
-            July = 6,
-            August = 7,
-            September = 8,
-            October = 9,
-            November = 10,
-            December = 11
-        }
-
-        public enum EDateByYear
-        {
-            Undecided = -1,
-            Y2017 = 0, Y2018 = 1, Y2019 = 2, Y2020 = 3, Y2021 = 4, Y2022 = 5, Y2023 = 6, Y2024 = 7, Y2025 = 8
-        }
-        #endregion
-
         #region Fields
-        public EDateByMonth DateByMonth;
-        public EDateByYear DateByYear;
+        public int DateByMonth;
+        public int DateByYear;
         public int DateByDay;
+        public string MonthSpelledOut;
         #endregion
 
         #region Initialization
@@ -52,290 +28,349 @@ namespace MyCommonUtilities
         /// <returns></returns>
         public MyMonthAYearGroupUtility(string _date)
         {
-            var _dateByMonthAndYear = CalculateDateByMonthAndYear(_date);
-            this.DateByMonth = _dateByMonthAndYear.dateByMonth;
-            this.DateByYear = _dateByMonthAndYear.dateByYear;
-            this.DateByDay = _dateByMonthAndYear.dateByDay;
+            (var _day, var _month, var _year) = CalculateDayMonthAYearByDateFormatted(_date);
+            this.DateByMonth = _month;
+            this.DateByYear = _year;
+            this.DateByDay = _day;
+            MonthSpelledOut = GetMonthSpelledOut(_month);
         }
 
         private MyMonthAYearGroupUtility()
         {
-            this.DateByMonth = EDateByMonth.Undecided;
-            this.DateByYear = EDateByYear.Undecided;
+            this.DateByMonth = -1;
+            this.DateByYear = -1;
+            this.DateByDay = -1;
+            this.MonthSpelledOut = "";
         }
         #endregion
 
         #region Helpers
-        public static bool IsMonthMissingDays(MyMonthAYearGroupUtility _monthAYearGroup, int _dayCount)
-        {
-            return _dayCount != GetDayCountFromMonthAYear(_monthAYearGroup.DateByMonth, _monthAYearGroup.DateByYear);
-        }
-
-        public static bool IsMonthMissingDays(EDateByMonth _month, EDateByYear _year, int _dayCount)
+        /// <summary>
+        /// Figures Out if Month is Missing Days Based on the Current Day Count / Number.
+        /// </summary>
+        public static bool IsMonthMissingDays(int _month, int _year, int _dayCount)
         {
             return _dayCount != GetDayCountFromMonthAYear(_month, _year);
         }
 
-        public static int GetDayCountFromMonthAYear(EDateByMonth _month, EDateByYear _year)
+        public static int GetDayCountFromMonthAYear(int _month, int _year)
         {
-            switch (_month)
-            {
-                case EDateByMonth.Undecided:
-                    return -1;
-                case EDateByMonth.January:
-                    return 31;
-                case EDateByMonth.February:
-                    if (_year == EDateByYear.Y2020 || _year == EDateByYear.Y2024)
-                    {
-                        return 29;
-                    }
-                    return 28;
-                case EDateByMonth.March:
-                    return 31;
-                case EDateByMonth.April:
-                    return 30;
-                case EDateByMonth.May:
-                    return 31;
-                case EDateByMonth.June:
-                    return 30;
-                case EDateByMonth.July:
-                    return 31;
-                case EDateByMonth.August:
-                    return 31;
-                case EDateByMonth.September:
-                    return 30;
-                case EDateByMonth.October:
-                    return 31;
-                case EDateByMonth.November:
-                    return 30;
-                case EDateByMonth.December:
-                    return 31;
-                default:
-                    return -1;
-            }
+            //If Month/Year is Undecided, then Do Not Try To Create a New DateTime
+            if (_month == -1 || _year == -1) return -1;
+
+            // Create a new DateTime object with the year and month
+            DateTime date = new DateTime(_year, _month, 1);
+
+            // Get the number of days in the month by subtracting the first day of the next month from the first day of this month
+            int dayCount = (date.AddMonths(1) - date).Days;
+
+            // Return the day count
+            return dayCount;
         }
 
-        (EDateByMonth dateByMonth, EDateByYear dateByYear, int dateByDay) CalculateDateByMonthAndYear(string _dateCellValue)
+        /// <summary>
+        /// Calculate The Year By A Date Formatted (mm/dd/yy)
+        /// </summary>
+        /// <param name="dateFormatted">Date Formatted By Month/Day/Year (mm/dd/yy), IE: 12/19/2022</param>
+        /// <returns>Day, Month and Year In Number Form</returns>
+        (int _day, int _month, int _year) CalculateDayMonthAYearByDateFormatted(string dateFormatted)
         {
-            var _dateByMonth = CalculateDateByMonth(_dateCellValue, out var bIsMonthSpelledOut);
-            return (_dateByMonth, CalculateDateByYear(_dateCellValue),
-                CalculateDateByDay(_dateCellValue, bIsMonthSpelledOut, _dateByMonth));
-        }
+            // Define a custom format provider that includes a leading zero for single-digit days
+            var formatProvider = new MyLeadingZeroDateFormatProvider();
 
-        int CalculateDateByDay(string _dateCellValue, bool bIsMonthSpelledOut, EDateByMonth _dateByMonth)
-        {
-            int _dateByNum = -1;
-
-            if (bIsMonthSpelledOut)
+            // Try to parse the date string using the custom format provider
+            if (DateTime.TryParse(dateFormatted, formatProvider, DateTimeStyles.None, out DateTime date))
             {
-                return CalculateDayFromDateSpelledOut(_dateCellValue, _dateByMonth.ToString().Length);
-            }
-
-            //If Month Is Less Than Two Digits, Use Normal Calculation,
-            //Otherwise, Shift the Index Lookup By One.
-            if (_dateByMonth != EDateByMonth.October &&
-                _dateByMonth != EDateByMonth.November &&
-                _dateByMonth != EDateByMonth.December)
-            {
-                //If 4th Char Has Slash, Day is Single Digit
-                if (_dateCellValue[3] == '/' &&
-                    int.TryParse(_dateCellValue[2].ToString(), out _dateByNum))
-                {
-                    return _dateByNum;
-                }
-                //If 4th Char Isn't A Slash, Day has Two Digits
-                if (_dateCellValue[3] != '/' &&
-                    int.TryParse(_dateCellValue.Substring(2, 2), out _dateByNum))
-                {
-                    return _dateByNum;
-                }
+                // If the parsing was successful, return the month and year
+                return (date.Day, date.Month, date.Year);
             }
             else
             {
-                //If 5th Char Has Slash, Day is Single Digit
-                if (_dateCellValue[4] == '/' &&
-                    int.TryParse(_dateCellValue[3].ToString(), out _dateByNum))
-                {
-                    return _dateByNum;
-                }
-                //If 5th Char Isn't A Slash, Day has Two Digits
-                if (_dateCellValue[4] != '/' &&
-                    int.TryParse(_dateCellValue.Substring(3, 2), out _dateByNum))
-                {
-                    return _dateByNum;
-                }
+                // If the parsing was not successful, return -1
+                return (-1, -1, -1);
             }
-
-            return _dateByNum;
         }
 
-        int CalculateDayFromDateSpelledOut(string _dateCellValue, int _monthCharCount)
+        string GetMonthSpelledOut(int _month)
         {
-            int _dateByNum = -1;
-            int _dayFirstNumIndex = _monthCharCount + 1;
-            int _daySecNumIndex = _monthCharCount + 2;
-            //If 2nd Date Char Can Be Parsed, Then Date Has Two Digits
-            if (int.TryParse(_dateCellValue[_daySecNumIndex].ToString(), out _dateByNum) &&
-                int.TryParse(_dateCellValue.Substring(_dayFirstNumIndex, 2), out _dateByNum))
-            {
-                return _dateByNum;
-            }
-            //If 1st Char Can Be Parsed And Not The 2nd, Day has One Digit
-            if (int.TryParse(_dateCellValue[_dayFirstNumIndex].ToString(), out _dateByNum))
-            {
-                return _dateByNum;
-            }
-            return _dateByNum;
-        }
-
-        EDateByYear CalculateDateByYear(string _dateCellValue)
-        {
-            if (_dateCellValue.Contains("2017"))
-                return EDateByYear.Y2017;
-            if (_dateCellValue.Contains("2018"))
-                return EDateByYear.Y2018;
-            if (_dateCellValue.Contains("2019"))
-                return EDateByYear.Y2019;
-            if (_dateCellValue.Contains("2020"))
-                return EDateByYear.Y2020;
-            if (_dateCellValue.Contains("2021"))
-                return EDateByYear.Y2021;
-            if (_dateCellValue.Contains("2022"))
-                return EDateByYear.Y2022;
-            if (_dateCellValue.Contains("2023"))
-                return EDateByYear.Y2023;
-            if (_dateCellValue.Contains("2024"))
-                return EDateByYear.Y2024;
-            if (_dateCellValue.Contains("2025"))
-                return EDateByYear.Y2025;
-
-            return EDateByYear.Undecided;
-        }
-
-        EDateByMonth CalculateDateByMonth(string _dateCellValue, out bool bIsMonthSpelledOut)
-        {
-            bIsMonthSpelledOut = false;
-            if (DateByMonthIsSpelledOut(_dateCellValue, out var _dateByMonth))
-            {
-                bIsMonthSpelledOut = true;
-                return _dateByMonth;
-            }
-            int _monthByNum = -1;
-            //If 2nd Char Has Slash, Month is Single Digit
-            if (_dateCellValue[1] == '/' &&
-                int.TryParse(_dateCellValue[0].ToString(), out _monthByNum))
-            {
-                return RetrieveMonthByNumber(_monthByNum);
-            }
-            //If 2nd Char Isn't A Slash, Month has Two Digits
-            if (_dateCellValue[1] != '/' &&
-                int.TryParse(_dateCellValue.Substring(0, 2), out _monthByNum))
-            {
-                return RetrieveMonthByNumber(_monthByNum);
-            }
-
-            return EDateByMonth.Undecided;
-        }
-
-        EDateByMonth RetrieveMonthByNumber(int _dateNumber)
-        {
-            switch (_dateNumber)
+            switch (_month)
             {
                 case 1:
-                    return EDateByMonth.January;
+                    return "January";
                 case 2:
-                    return EDateByMonth.February;
+                    return "February";
                 case 3:
-                    return EDateByMonth.March;
+                    return "March";
                 case 4:
-                    return EDateByMonth.April;
+                    return "April";
                 case 5:
-                    return EDateByMonth.May;
+                    return "May";
                 case 6:
-                    return EDateByMonth.June;
+                    return "June";
                 case 7:
-                    return EDateByMonth.July;
+                    return "July";
                 case 8:
-                    return EDateByMonth.August;
+                    return "August";
                 case 9:
-                    return EDateByMonth.September;
+                    return "September";
                 case 10:
-                    return EDateByMonth.October;
+                    return "October";
                 case 11:
-                    return EDateByMonth.November;
+                    return "November";
                 case 12:
-                    return EDateByMonth.December;
+                    return "December";
                 default:
-                    return EDateByMonth.Undecided;
+                    return "";
             }
-        }
-
-        bool DateByMonthIsSpelledOut(string _dateCellValue, out EDateByMonth _dateByMonth)
-        {
-            _dateByMonth = EDateByMonth.Undecided;
-            string _dateLowerCase = _dateCellValue.ToLower();
-            if (_dateLowerCase.Contains("january"))
-            {
-                _dateByMonth = EDateByMonth.January;
-                return true;
-            }
-            if (_dateLowerCase.Contains("february"))
-            {
-                _dateByMonth = EDateByMonth.February;
-                return true;
-            }
-            if (_dateLowerCase.Contains("march"))
-            {
-                _dateByMonth = EDateByMonth.March;
-                return true;
-            }
-            if (_dateLowerCase.Contains("april"))
-            {
-                _dateByMonth = EDateByMonth.April;
-                return true;
-            }
-            if (_dateLowerCase.Contains("may"))
-            {
-                _dateByMonth = EDateByMonth.May;
-                return true;
-            }
-            if (_dateLowerCase.Contains("june"))
-            {
-                _dateByMonth = EDateByMonth.June;
-                return true;
-            }
-            if (_dateLowerCase.Contains("july"))
-            {
-                _dateByMonth = EDateByMonth.July;
-                return true;
-            }
-            if (_dateLowerCase.Contains("august"))
-            {
-                _dateByMonth = EDateByMonth.August;
-                return true;
-            }
-            if (_dateLowerCase.Contains("september"))
-            {
-                _dateByMonth = EDateByMonth.September;
-                return true;
-            }
-            if (_dateLowerCase.Contains("october"))
-            {
-                _dateByMonth = EDateByMonth.October;
-                return true;
-            }
-            if (_dateLowerCase.Contains("november"))
-            {
-                _dateByMonth = EDateByMonth.November;
-                return true;
-            }
-            if (_dateLowerCase.Contains("december"))
-            {
-                _dateByMonth = EDateByMonth.December;
-                return true;
-            }
-            return false;
         }
         #endregion
+
+        #region LegacyCode
+        //public enum EDateByMonth
+        //{
+        //    Undecided = -1,
+        //    January = 0,
+        //    February = 1,
+        //    March = 2,
+        //    April = 3,
+        //    May = 4,
+        //    June = 5,
+        //    July = 6,
+        //    August = 7,
+        //    September = 8,
+        //    October = 9,
+        //    November = 10,
+        //    December = 11
+        //}
+
+        //bool DateByMonthIsSpelledOut(string _dateCellValue, out EDateByMonth _dateByMonth)
+        //{
+        //    _dateByMonth = EDateByMonth.Undecided;
+        //    string _dateLowerCase = _dateCellValue.ToLower();
+        //    if (_dateLowerCase.Contains("january"))
+        //    {
+        //        _dateByMonth = EDateByMonth.January;
+        //        return true;
+        //    }
+        //    if (_dateLowerCase.Contains("february"))
+        //    {
+        //        _dateByMonth = EDateByMonth.February;
+        //        return true;
+        //    }
+        //    if (_dateLowerCase.Contains("march"))
+        //    {
+        //        _dateByMonth = EDateByMonth.March;
+        //        return true;
+        //    }
+        //    if (_dateLowerCase.Contains("april"))
+        //    {
+        //        _dateByMonth = EDateByMonth.April;
+        //        return true;
+        //    }
+        //    if (_dateLowerCase.Contains("may"))
+        //    {
+        //        _dateByMonth = EDateByMonth.May;
+        //        return true;
+        //    }
+        //    if (_dateLowerCase.Contains("june"))
+        //    {
+        //        _dateByMonth = EDateByMonth.June;
+        //        return true;
+        //    }
+        //    if (_dateLowerCase.Contains("july"))
+        //    {
+        //        _dateByMonth = EDateByMonth.July;
+        //        return true;
+        //    }
+        //    if (_dateLowerCase.Contains("august"))
+        //    {
+        //        _dateByMonth = EDateByMonth.August;
+        //        return true;
+        //    }
+        //    if (_dateLowerCase.Contains("september"))
+        //    {
+        //        _dateByMonth = EDateByMonth.September;
+        //        return true;
+        //    }
+        //    if (_dateLowerCase.Contains("october"))
+        //    {
+        //        _dateByMonth = EDateByMonth.October;
+        //        return true;
+        //    }
+        //    if (_dateLowerCase.Contains("november"))
+        //    {
+        //        _dateByMonth = EDateByMonth.November;
+        //        return true;
+        //    }
+        //    if (_dateLowerCase.Contains("december"))
+        //    {
+        //        _dateByMonth = EDateByMonth.December;
+        //        return true;
+        //    }
+        //    return false;
+        //}
+
+        //int CalculateDateByDay(string _dateCellValue, bool bIsMonthSpelledOut, EDateByMonth _dateByMonth)
+        //{
+        //    int _dateByNum = -1;
+
+        //    if (bIsMonthSpelledOut)
+        //    {
+        //        return CalculateDayFromDateSpelledOut(_dateCellValue, _dateByMonth.ToString().Length);
+        //    }
+
+        //    //If Month Is Less Than Two Digits, Use Normal Calculation,
+        //    //Otherwise, Shift the Index Lookup By One.
+        //    if (_dateByMonth != EDateByMonth.October &&
+        //        _dateByMonth != EDateByMonth.November &&
+        //        _dateByMonth != EDateByMonth.December)
+        //    {
+        //        //If 4th Char Has Slash, Day is Single Digit
+        //        if (_dateCellValue[3] == '/' &&
+        //            int.TryParse(_dateCellValue[2].ToString(), out _dateByNum))
+        //        {
+        //            return _dateByNum;
+        //        }
+        //        //If 4th Char Isn't A Slash, Day has Two Digits
+        //        if (_dateCellValue[3] != '/' &&
+        //            int.TryParse(_dateCellValue.Substring(2, 2), out _dateByNum))
+        //        {
+        //            return _dateByNum;
+        //        }
+        //    }
+        //    else
+        //    {
+        //        //If 5th Char Has Slash, Day is Single Digit
+        //        if (_dateCellValue[4] == '/' &&
+        //            int.TryParse(_dateCellValue[3].ToString(), out _dateByNum))
+        //        {
+        //            return _dateByNum;
+        //        }
+        //        //If 5th Char Isn't A Slash, Day has Two Digits
+        //        if (_dateCellValue[4] != '/' &&
+        //            int.TryParse(_dateCellValue.Substring(3, 2), out _dateByNum))
+        //        {
+        //            return _dateByNum;
+        //        }
+        //    }
+
+        //    return _dateByNum;
+        //}
+
+        //int CalculateDayFromDateSpelledOut(string _dateCellValue, int _monthCharCount)
+        //{
+        //    int _dateByNum = -1;
+        //    int _dayFirstNumIndex = _monthCharCount + 1;
+        //    int _daySecNumIndex = _monthCharCount + 2;
+        //    //If 2nd Date Char Can Be Parsed, Then Date Has Two Digits
+        //    if (int.TryParse(_dateCellValue[_daySecNumIndex].ToString(), out _dateByNum) &&
+        //        int.TryParse(_dateCellValue.Substring(_dayFirstNumIndex, 2), out _dateByNum))
+        //    {
+        //        return _dateByNum;
+        //    }
+        //    //If 1st Char Can Be Parsed And Not The 2nd, Day has One Digit
+        //    if (int.TryParse(_dateCellValue[_dayFirstNumIndex].ToString(), out _dateByNum))
+        //    {
+        //        return _dateByNum;
+        //    }
+        //    return _dateByNum;
+        //}
+
+        //EDateByMonth CalculateDateByMonth(string _dateCellValue, out bool bIsMonthSpelledOut)
+        //{
+        //    bIsMonthSpelledOut = false;
+        //    if (DateByMonthIsSpelledOut(_dateCellValue, out var _dateByMonth))
+        //    {
+        //        bIsMonthSpelledOut = true;
+        //        return _dateByMonth;
+        //    }
+        //    int _monthByNum = -1;
+        //    //If 2nd Char Has Slash, Month is Single Digit
+        //    if (_dateCellValue[1] == '/' &&
+        //        int.TryParse(_dateCellValue[0].ToString(), out _monthByNum))
+        //    {
+        //        return RetrieveMonthByNumber(_monthByNum);
+        //    }
+        //    //If 2nd Char Isn't A Slash, Month has Two Digits
+        //    if (_dateCellValue[1] != '/' &&
+        //        int.TryParse(_dateCellValue.Substring(0, 2), out _monthByNum))
+        //    {
+        //        return RetrieveMonthByNumber(_monthByNum);
+        //    }
+
+        //    return EDateByMonth.Undecided;
+        //}
+
+        //(int dateByMonth, int dateByYear, int dateByDay) CalculateDateByMonthAndYear(string _dateCellValue)
+        //{
+        //    var _dateByMonth = CalculateDateByMonth(_dateCellValue, out var bIsMonthSpelledOut);
+        //    (var _month, var _year) = CalculateDayMonthAYearByDateFormatted(_dateCellValue);
+        //    return (_month, _year,
+        //        CalculateDateByDay(_dateCellValue, bIsMonthSpelledOut, _dateByMonth));
+        //}
+
+        //public static int GetDayCountFromMonthAYear(EDateByMonth _month, int _year)
+        //{
+        //    switch (_month)
+        //    {
+        //        case EDateByMonth.Undecided:
+        //            return -1;
+        //        case EDateByMonth.January:
+        //            return GetDayCountFromMonthAYear(1, _year);
+        //        case EDateByMonth.February:
+        //            return GetDayCountFromMonthAYear(2, _year);
+        //        case EDateByMonth.March:
+        //            return GetDayCountFromMonthAYear(3, _year);
+        //        case EDateByMonth.April:
+        //            return GetDayCountFromMonthAYear(4, _year);
+        //        case EDateByMonth.May:
+        //            return GetDayCountFromMonthAYear(5, _year);
+        //        case EDateByMonth.June:
+        //            return GetDayCountFromMonthAYear(6, _year);
+        //        case EDateByMonth.July:
+        //            return GetDayCountFromMonthAYear(7, _year);
+        //        case EDateByMonth.August:
+        //            return GetDayCountFromMonthAYear(8, _year);
+        //        case EDateByMonth.September:
+        //            return GetDayCountFromMonthAYear(9, _year);
+        //        case EDateByMonth.October:
+        //            return GetDayCountFromMonthAYear(10, _year);
+        //        case EDateByMonth.November:
+        //            return GetDayCountFromMonthAYear(11, _year);
+        //        case EDateByMonth.December:
+        //            return GetDayCountFromMonthAYear(12, _year);
+        //        default:
+        //            return -1;
+        //    }
+        //}
+
+        //public static bool IsMonthMissingDays(MyMonthAYearGroupUtility _monthAYearGroup, int _dayCount)
+        //{
+        //    return _dayCount != GetDayCountFromMonthAYear(_monthAYearGroup.DateByMonth, _monthAYearGroup.DateByYear);
+        //}
+        #endregion
     }
+
+    #region DateFormatProvider
+    // Custom format provider that includes a leading zero for single-digit days
+    public class MyLeadingZeroDateFormatProvider : IFormatProvider, ICustomFormatter
+    {
+        public object GetFormat(Type formatType)
+        {
+            if (formatType == typeof(ICustomFormatter))
+                return this;
+            return CultureInfo.CurrentCulture.GetFormat(formatType);
+        }
+
+        public string Format(string format, object arg, IFormatProvider formatProvider)
+        {
+            if (arg is DateTime dt)
+            {
+                return dt.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
+            }
+            return arg.ToString();
+        }
+    }
+    #endregion
+
 }
